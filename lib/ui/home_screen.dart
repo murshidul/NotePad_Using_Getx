@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:seventeeth_assignment/models/note_model.dart';
+import 'package:seventeeth_assignment/ui/note_details_screen.dart';
 import 'package:seventeeth_assignment/utils/all_styles.dart';
 import '../controllers/home_controller.dart';
 import '../utils/all_colors.dart';
@@ -17,7 +19,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AllColors.tealColor,
+        backgroundColor: AllColors.brownColor,
         title: Text(
           "NotePad with Getx",
           style: AllStyles.titleStyle.copyWith(color: AllColors.whitColor),
@@ -38,6 +40,9 @@ class HomeScreen extends StatelessWidget {
                       child: Row(
                         children: [
                           InkWell(
+                            onTap: (){
+                              _showUpdateAlert(context,index);
+                            },
                             child: Icon(
                               Icons.edit,
                               color: AllColors.blckColor.withOpacity(0.7),
@@ -56,11 +61,18 @@ class HomeScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                    onTap: (){
+                      Get.to(NoteDetailsScreen(), arguments: {
+                        "title": homeController.notes[index].title,
+                        "description":homeController.notes[index].description,
+                        "date":homeController.notes[index].date
+                      });
+                    }
                   );
                 });
       }),
       floatingActionButton: FloatingActionButton(
-          backgroundColor: AllColors.tealColor,
+          backgroundColor: AllColors.brownColor,
           child: const Icon(
             Icons.add,
             color: AllColors.whitColor,
@@ -111,17 +123,19 @@ class HomeScreen extends StatelessWidget {
                   ),
                   TextButton(
                     style: TextButton.styleFrom(
-                        backgroundColor: AllColors.tealColor),
+                        backgroundColor: AllColors.brownColor),
                     onPressed: () {
                       if (titleController.text.isEmpty &&
                           descriptionController.text.isEmpty) {
                         print('Please fill up the form');
                       } else {
+                        DateTime now= DateTime.now();
+                        String formattedDate = DateFormat('dd-MM-yyyy').format(now);
                         homeController.addNote(
                           NoteModel(
                             titleController.text,
                             descriptionController.text,
-                            DateTime.now().toString(),
+                            formattedDate,
                           ),
                         );
                       }
@@ -129,6 +143,76 @@ class HomeScreen extends StatelessWidget {
                     },
                     child: Text(
                       "Save",
+                      style: TextStyle(
+                        color: AllColors.whitColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        });
+  }
+  _showUpdateAlert(BuildContext context, int index) {
+    showDialog(
+        context: context,
+        builder: (_) {
+          return Center(
+            child: SingleChildScrollView(
+              child: AlertDialog(
+                content: Column(
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      decoration: InputDecoration(
+                        hintText: 'Title',
+                      ),
+                    ),
+                    TextField(
+                      controller: descriptionController,
+                      decoration: InputDecoration(
+                        hintText: 'Description',
+                      ),
+                    )
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    style: TextButton.styleFrom(
+                        backgroundColor: AllColors.redColor),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      "Cancel",
+                      style: TextStyle(
+                        color: AllColors.whitColor,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                        backgroundColor: AllColors.brownColor),
+                    onPressed: () {
+                      if (titleController.text.isEmpty &&
+                          descriptionController.text.isEmpty) {
+                        print('Please fill up the form');
+                      } else {
+                        DateTime now= DateTime.now();
+                        String formattedDate = DateFormat('dd-MM-yyyy').format(now);
+                        homeController.updateNote(
+                          NoteModel(
+                            titleController.text,
+                            descriptionController.text,
+                            formattedDate,
+                          ),index
+                        );
+                      }
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      "Update",
                       style: TextStyle(
                         color: AllColors.whitColor,
                       ),
