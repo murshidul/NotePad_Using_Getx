@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:seventeeth_assignment/models/note_model.dart';
 import 'package:seventeeth_assignment/ui/note_details_screen.dart';
@@ -15,6 +17,8 @@ class HomeScreen extends StatelessWidget {
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
 
+  final Box box = Hive.box('notes');
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -27,48 +31,54 @@ class HomeScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: GetBuilder<HomeController>(builder: (_) {
-        return homeController.notes.isEmpty
+        return box.keys.length == 0
             ? Center(child: Text("Empty Note!!"))
-            : ListView.builder(
-                itemCount: homeController.notes.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(homeController.notes[index].title),
-                    subtitle: Text(homeController.notes[index].description),
-                    trailing: SizedBox(
-                      width: 60.0,
-                      child: Row(
-                        children: [
-                          InkWell(
-                            onTap: (){
-                              _showUpdateAlert(context,index);
-                            },
-                            child: Icon(
-                              Icons.edit,
-                              color: AllColors.blckColor.withOpacity(0.7),
+            : ValueListenableBuilder(
+                valueListenable: box.listenable(),
+                builder: (context, box, child) {
+                  return ListView.builder(
+                      itemCount: box.keys.length,
+                      itemBuilder: (context, index) {
+                        final NoteModel note = box.getAt(index);
+                        return ListTile(
+                            title: Text(note.title),
+                            subtitle: Text(note.description),
+                            trailing: SizedBox(
+                              width: 60.0,
+                              child: Row(
+                                children: [
+                                  InkWell(
+                                    onTap: () {
+                                      _showUpdateAlert(context, index);
+                                    },
+                                    child: Icon(
+                                      Icons.edit,
+                                      color:
+                                          AllColors.blckColor.withOpacity(0.7),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  InkWell(
+                                    onTap: () =>
+                                        homeController.deleteNote(index),
+                                    child: Icon(
+                                      Icons.delete,
+                                      color: AllColors.redColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                          SizedBox(
-                            width: 10,
-                          ),
-                          InkWell(
-                            onTap: () => homeController.deleteNote(index),
-                            child: Icon(
-                              Icons.delete,
-                              color: AllColors.redColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    onTap: (){
-                      Get.to(NoteDetailsScreen(), arguments: {
-                        "title": homeController.notes[index].title,
-                        "description":homeController.notes[index].description,
-                        "date":homeController.notes[index].date
+                            onTap: () {
+                              Get.to(NoteDetailsScreen(), arguments: {
+                                "title": note.title,
+                                "description": note.description,
+                                "date": note.date
+                              });
+                            });
                       });
-                    }
-                  );
                 });
       }),
       floatingActionButton: FloatingActionButton(
@@ -129,8 +139,9 @@ class HomeScreen extends StatelessWidget {
                           descriptionController.text.isEmpty) {
                         print('Please fill up the form');
                       } else {
-                        DateTime now= DateTime.now();
-                        String formattedDate = DateFormat('dd-MM-yyyy').format(now);
+                        DateTime now = DateTime.now();
+                        String formattedDate =
+                            DateFormat('dd-MM-yyyy').format(now);
                         homeController.addNote(
                           NoteModel(
                             titleController.text,
@@ -154,6 +165,7 @@ class HomeScreen extends StatelessWidget {
           );
         });
   }
+
   _showUpdateAlert(BuildContext context, int index) {
     showDialog(
         context: context,
@@ -199,15 +211,16 @@ class HomeScreen extends StatelessWidget {
                           descriptionController.text.isEmpty) {
                         print('Please fill up the form');
                       } else {
-                        DateTime now= DateTime.now();
-                        String formattedDate = DateFormat('dd-MM-yyyy').format(now);
+                        DateTime now = DateTime.now();
+                        String formattedDate =
+                            DateFormat('dd-MM-yyyy').format(now);
                         homeController.updateNote(
-                          NoteModel(
-                            titleController.text,
-                            descriptionController.text,
-                            formattedDate,
-                          ),index
-                        );
+                            NoteModel(
+                              titleController.text,
+                              descriptionController.text,
+                              formattedDate,
+                            ),
+                            index);
                       }
                       Navigator.pop(context);
                     },
